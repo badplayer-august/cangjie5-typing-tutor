@@ -7,5 +7,5 @@ import (
 )
 
 func main() {
-  fmt.Println(ui.Render("Cangjie Type Tutor", "日"))
+  fmt.Println(ui.Render("Cangjie Type Tutor", "晶", "aaa"))
 }

@@ -1,45 +1,72 @@
 package ui
 
 import (
-	"fmt"
 	"os"
 	"strings"
 
+	"github.com/badplayer-august/cangjie5-typing-tutor/src/cangjie"
 	"github.com/charmbracelet/lipgloss"
 	"golang.org/x/term"
 )
 
 var (
 	// General
-	docStyle   = lipgloss.NewStyle().Padding(1, 0, 1, 0)
-	titleStyle = lipgloss.NewStyle().Align(lipgloss.Center)
+	docStyle   = lipgloss.NewStyle().Align(lipgloss.Center).Padding(1, 2, 1, 2)
+	titleStyle = lipgloss.NewStyle()
+	helpStyle  = lipgloss.NewStyle().Italic(true).Faint(true)
 
 	// Answer
-	defaultAnswerStyle = lipgloss.AdaptiveColor{Light: "#4c4f69", Dark: "#cad3f5"}
-	correctAnswerStyle = lipgloss.AdaptiveColor{Light: "#40a02b", Dark: "#a6e3a1"}
-	wrongAnswerStyle   = lipgloss.AdaptiveColor{Light: "#d20f39", Dark: "#f38ba8"}
+	correctAnswerColor = lipgloss.Color("2")
+	wrongAnswerColor   = lipgloss.Color("1")
 )
 
-func Render(title string, char string) string {
+func Render(title string, char string, input string) string {
 	physicalWidth, _, _ := term.GetSize(int(os.Stdout.Fd()))
+	docStyle = docStyle.Width(physicalWidth)
 	doc := strings.Builder{}
 
 	if physicalWidth > 0 {
 		docStyle = docStyle.MaxWidth(physicalWidth)
 	}
 
-  fmt.Println(physicalWidth)
-  // title
-  {
-    row := titleStyle.Width(physicalWidth).Render(title)
-    doc.WriteString(row + "\n\n")
-  }
+	// title
+	{
+		row := titleStyle.Render(title)
+		doc.WriteString(row + "\n\n")
+	}
 
-  // char
-  {
-    row := titleStyle.Width(physicalWidth).Height(10).Foreground(correctAnswerStyle).Render(char)
-    doc.WriteString(row + "\n\n")
-  }
+	// char
+	{
+		row := titleStyle.Foreground(wrongAnswerColor).Render(char)
+		doc.WriteString(row + "\n\n")
+	}
+
+	// kays and names
+	{
+		keys, names := formatDecomposition(input)
+    row := lipgloss.JoinVertical(lipgloss.Center, names, keys)
+		doc.WriteString(row + "\n\n")
+	}
+
+	{
+		row := helpStyle.Render("Press ctrl-c to quit.")
+		doc.WriteString(row + "\n\n")
+	}
 
 	return docStyle.Render(doc.String())
 }
+
+func formatDecomposition(decomp string) (string, string) {
+			var (
+				runes = []rune(decomp)
+				keys  = make([]string, len(runes))
+				names = make([]string, len(runes))
+			)
+
+			for i, r := range runes {
+				keys[i] = string(r + 65216)
+				names[i] = cangjie.KeyToName[r]
+			}
+
+			return strings.Join(keys, " "), strings.Join(names, " ")
+		}
